@@ -1,0 +1,72 @@
+{
+	"info": {
+		"_postman_id": "537cb826-bffb-4acb-9a87-648471a60bab",
+		"name": "service-template",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"item": [
+				{
+					"name": "Shallow Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{service_template_url}}/health",
+							"host": [
+								"{{service_template_url}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Deep health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{service_template_url}}/health/deep",
+							"host": [
+								"{{service_template_url}}"
+							],
+							"path": [
+								"health",
+								"deep"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Bin Lookup",
+			"item": [
+				{
+					"name": "Retrieve BIN",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{service_template_url}}/bin/45717360",
+							"host": [
+								"{{service_template_url}}"
+							],
+							"path": [
+								"bin",
+								"45717360"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
