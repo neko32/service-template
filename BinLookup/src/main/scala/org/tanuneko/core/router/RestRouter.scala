@@ -15,6 +15,8 @@ class RestRouter(healthcheckService: HealthCheckService, binService: BinService)
     extends JsonResponseHandling
     with LazyLogging {
 
+  import ErrorResponseJsonProtocol._
+
   def route: Route = healthRoute ~ binRoute
 
   def healthRoute =
@@ -28,7 +30,8 @@ class RestRouter(healthcheckService: HealthCheckService, binService: BinService)
           healthcheckService.deepCheck match {
             case HealthyStatus => asJsonResponse(StatusCode.int2StatusCode(200), "healthy@deepcheck")
             case UnhealthyStatus(id, descr) =>
-              asJsonResponse(StatusCode.int2StatusCode(500), s"ID=${id}, DESC=${descr}")
+              val errorResp = ErrorResponse(id, descr)
+              asJsonResponse(StatusCode.int2StatusCode(500), errorResp.toJson.compactPrint)
           }
         }
     }
@@ -36,6 +39,7 @@ class RestRouter(healthcheckService: HealthCheckService, binService: BinService)
   // sample - http://localhost:10520/bin/45717360
   def binRoute = {
     import BinInfoJsonProtocol._
+    import ErrorResponseJsonProtocol._
     // [TODO] add validation for segment val
     get {
       path("bin" / Segment) { binNum: String =>
@@ -48,7 +52,7 @@ class RestRouter(healthcheckService: HealthCheckService, binService: BinService)
                   HttpResponse(200, entity = HttpEntity(ContentTypes.`application/json`, binInfo.toJson.prettyPrint))
                 )
               case Left(e) =>
-                complete(HttpResponse(500, entity = HttpEntity(ContentTypes.`application/json`, e.getMessage)))
+                complete(HttpResponse(500, entity = HttpEntity(ContentTypes.`application/json`, e.toJson.compactPrint)))
             }
           case Failure(e) =>
             e.printStackTrace()

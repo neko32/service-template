@@ -6,6 +6,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AsyncWordSpecLike
 import org.tanuneko.core.TestData
+import org.tanuneko.core.models.ErrorResponse
 import org.tanuneko.ops.BinRetrievalOps
 
 import scala.concurrent.Future
@@ -24,7 +25,7 @@ class BinServiceSpec
     val binRetrievalOpsMock = stub[BinRetrievalOps]
 
     (binRetrievalOpsMock.retrieveBIN _).when(*).returns(Future.successful(Right(TestData.testBinDataAsBinInfo)))
-    val binService:BinService = new DefaultBinService(binRetrievalOpsMock)
+    val binService: BinService = new DefaultBinService(binRetrievalOpsMock)
     binService.lookup("111111") map {
       case Left(_) => fail("should be right")
       case Right(bin) =>
@@ -40,12 +41,15 @@ class BinServiceSpec
 
     val binRetrievalOpsMock = stub[BinRetrievalOps]
 
-    (binRetrievalOpsMock.retrieveBIN _).when(*).returns(Future.successful(Left(new Exception("ERR"))))
-    val binService:BinService = new DefaultBinService(binRetrievalOpsMock)
+    (binRetrievalOpsMock.retrieveBIN _)
+      .when(*)
+      .returns(Future.successful(Left(ErrorResponse(id = "ERRID", descr = "ERRDESCR"))))
+    val binService: BinService = new DefaultBinService(binRetrievalOpsMock)
     binService.lookup("111111") map {
       case Right(_) => fail("should be left ")
-      case Left(ex) =>
-        ex.getMessage must equal("ERR")
+      case Left(em) =>
+        em.id must equal("ERRID")
+        em.descr must equal("ERRDESCR")
     }
 
   }

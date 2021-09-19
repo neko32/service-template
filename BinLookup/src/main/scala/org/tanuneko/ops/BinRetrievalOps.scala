@@ -8,7 +8,7 @@ import akka.http.scaladsl.model.headers.RawHeader
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import com.typesafe.scalalogging.LazyLogging
-import org.tanuneko.core.models.{ BinInfo, BinInfoJsonProtocol }
+import org.tanuneko.core.models.{ BinInfo, BinInfoJsonProtocol, ErrorResponse }
 import spray.json._
 
 import scala.concurrent.{ ExecutionContext, Future }
@@ -27,7 +27,7 @@ class DefaultBinHttpOps(implicit ac: ActorSystem, ec: ExecutionContext) extends 
 }
 
 trait BinRetrievalOps {
-  def retrieveBIN(bin: String): Future[Either[Exception, BinInfo]]
+  def retrieveBIN(bin: String): Future[Either[ErrorResponse, BinInfo]]
 }
 
 class DefaultBinRetrievalOps(BinHttpOps: BinHttpOps, binSvcUrl: String)(implicit
@@ -36,7 +36,7 @@ class DefaultBinRetrievalOps(BinHttpOps: BinHttpOps, binSvcUrl: String)(implicit
 ) extends BinRetrievalOps
     with LazyLogging {
 
-  override def retrieveBIN(bin: String): Future[Either[Exception, BinInfo]] = {
+  override def retrieveBIN(bin: String): Future[Either[ErrorResponse, BinInfo]] = {
     implicit val jsonStreamingSupport: JsonEntityStreamingSupport =
       EntityStreamingSupport.json()
 
@@ -53,7 +53,9 @@ class DefaultBinRetrievalOps(BinHttpOps: BinHttpOps, binSvcUrl: String)(implicit
               rez.asJson.convertTo[BinInfo]
             }
             retVal.map(Right(_))
-          case e => Future(Left(new Exception(s"err - ${x.status.intValue}")))
+          case e =>
+            val errorResp = ErrorResponse(s"BINSVC_ERR_${x.status.intValue}", s"err - ${x.status.intValue}")
+            Future(Left(errorResp))
         }
       }
   }

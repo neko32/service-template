@@ -8,6 +8,8 @@ version := "0.1"
 organization := "tanuki"
 scalaVersion := "2.13.6"
 
+mainClass := Some("org.tanuneko.core.App")
+
 lazy val settings = Seq(
   scalacOptions ++= Seq(
     "-Ypartial-unification",

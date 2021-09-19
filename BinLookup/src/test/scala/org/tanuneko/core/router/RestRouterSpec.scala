@@ -7,17 +7,14 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.tanuneko.core.TestData
-import org.tanuneko.core.models.BinInfo
-import org.tanuneko.core.services.{DefaultBinService, DefaultHealthCheckService}
+import org.tanuneko.core.models.{ BinInfo, ErrorResponse }
+import org.tanuneko.core.services.{ DefaultBinService, DefaultHealthCheckService }
 import org.tanuneko.ops.BinRetrievalOps
 
 import scala.concurrent.Future
 import spray.json._
 
-class RestRouterSpec extends AnyWordSpec
-  with Matchers
-  with MockFactory
-  with ScalatestRouteTest {
+class RestRouterSpec extends AnyWordSpec with Matchers with MockFactory with ScalatestRouteTest {
 
   implicit val ec = system.dispatcher
   implicit val ac = system
@@ -36,7 +33,6 @@ class RestRouterSpec extends AnyWordSpec
       entityAs[String] must equal("healthy@shallowcheck")
     }
 
-
   }
 
   "Deep Health Check returns either Healthy or Unhealthy Status" in {
@@ -48,7 +44,7 @@ class RestRouterSpec extends AnyWordSpec
     val restRouter = new RestRouter(healthCheckService, binService)
     Get("/health/deep") ~> restRouter.route ~> check {
       status.intValue() must equal(500)
-      entityAs[String] must equal("ID=ERR-1, DESC=NOSQL DB NOT RESPONDING")
+      entityAs[String] must equal("{\"descr\":\"NOSQL DB NOT RESPONDING\",\"id\":\"ERR-1\"}")
     }
     Get("/health/deep") ~> restRouter.route ~> check {
       status.intValue() must equal(200)
@@ -67,7 +63,7 @@ class RestRouterSpec extends AnyWordSpec
     val restRouter = new RestRouter(healthCheckService, binService)
     Get("/bin/123456") ~> restRouter.route ~> check {
       status.intValue() must equal(200)
-      val result = entityAs[String]
+      val result  = entityAs[String]
       val binInfo = result.asJson.convertTo[BinInfo]
       binInfo.bank.name must equal("Jyske Bank")
       binInfo.brand must equal("Visa/Dankort")
@@ -80,13 +76,15 @@ class RestRouterSpec extends AnyWordSpec
   "Bin Service lookup ends up fails with some error status due to external service's non-200 result" in {
     val binRetrievalOpsMock = stub[BinRetrievalOps]
 
-    (binRetrievalOpsMock.retrieveBIN _).when(*).returns(Future.successful(Left(new Exception("ERR"))))
+    (binRetrievalOpsMock.retrieveBIN _)
+      .when(*)
+      .returns(Future.successful(Left(ErrorResponse(id = "ERRID", descr = "ERRDESCR"))))
     val binService = new DefaultBinService(binRetrievalOpsMock)
 
     val restRouter = new RestRouter(healthCheckService, binService)
     Get("/bin/123456") ~> restRouter.route ~> check {
       status.intValue() must equal(500)
-      entityAs[String] must equal("ERR")
+      entityAs[String] must equal("{\"descr\":\"ERRDESCR\",\"id\":\"ERRID\"}")
     }
 
   }
@@ -104,7 +102,5 @@ class RestRouterSpec extends AnyWordSpec
     }
 
   }
-
-
 
 }

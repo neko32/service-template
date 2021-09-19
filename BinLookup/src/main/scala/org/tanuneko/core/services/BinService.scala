@@ -12,7 +12,7 @@ import org.tanuneko.ops.BinRetrievalOps
 import scala.concurrent.{ ExecutionContext, Future }
 
 trait BinService {
-  def lookup(bin: String): Future[Either[Exception, BinInfo]]
+  def lookup(bin: String): Future[Either[ErrorResponse, BinInfo]]
 }
 
 class DefaultBinService(binOps: BinRetrievalOps)(implicit
@@ -21,6 +21,6 @@ class DefaultBinService(binOps: BinRetrievalOps)(implicit
 ) extends BinService
     with LazyLogging {
 
-  override def lookup(bin: String): Future[Either[Exception, BinInfo]] = binOps.retrieveBIN(bin)
+  override def lookup(bin: String): Future[Either[ErrorResponse, BinInfo]] = binOps.retrieveBIN(bin)
 
 }

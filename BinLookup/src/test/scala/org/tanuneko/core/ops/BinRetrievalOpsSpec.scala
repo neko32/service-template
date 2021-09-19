@@ -69,7 +69,9 @@ class BinRetrievalOpsSpec
       .map { result =>
         result match {
           case Right(_) => fail("should be left")
-          case Left(e)  => e.getMessage must equal("err - 400")
+          case Left(e) =>
+            e.id must equal("BINSVC_ERR_400")
+            e.descr must equal("err - 400")
         }
       }
   }
@@ -96,7 +98,9 @@ class BinRetrievalOpsSpec
       .map { result =>
         result match {
           case Right(_) => fail("should be left")
-          case Left(e)  => e.getMessage must equal("err - 500")
+          case Left(e) =>
+            e.id must equal("BINSVC_ERR_500")
+            e.descr must equal("err - 500")
         }
       }
   }
