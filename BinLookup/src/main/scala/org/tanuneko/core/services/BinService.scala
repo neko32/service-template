@@ -7,7 +7,7 @@ import akka.http.scaladsl.model.{ HttpMethods, HttpRequest }
 import org.tanuneko.core.models._
 import akka.http.scaladsl.model.headers.RawHeader
 import com.typesafe.scalalogging.LazyLogging
-import org.tanuneko.ops.BinRetrievalOps
+import org.tanuneko.ops.{ BinRetrievalOps, CacheOps }
 
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -17,10 +17,11 @@ trait BinService {
 
 class DefaultBinService(binOps: BinRetrievalOps)(implicit
     ac: ActorSystem,
-    ec: ExecutionContext
+    ec: ExecutionContext,
+    cacheOps: CacheOps[String]
 ) extends BinService
     with LazyLogging {
 
-  override def lookup(bin: String): Future[Either[ErrorResponse, BinInfo]] = binOps.retrieveBIN(bin)
+  override def lookup(bin: String): Future[Either[ErrorResponse, BinInfo]] = binOps.retrieveBIN(bin, cacheOps)
 
 }

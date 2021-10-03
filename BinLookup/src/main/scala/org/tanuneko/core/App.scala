@@ -9,7 +9,7 @@ import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.tanuneko.core.router.RestRouter
 import org.tanuneko.core.services._
-import org.tanuneko.ops.{ DefaultBinHttpOps, DefaultBinRetrievalOps }
+import org.tanuneko.ops.{ DefaultBinHttpOps, DefaultBinRetrievalOps, RedisCacheOpsProvider }
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
@@ -30,10 +30,13 @@ object App {
     val (host, port) = (cfg.getString("app.host"), cfg.getInt("app.port"))
     val appName      = cfg.getString("app.akka.systemName")
     val binSvcUrl    = cfg.getString("binService.url")
+    val redisUrl     = cfg.getString("redis.host")
+    val redisPort    = cfg.getString("redis.port").toInt
 
     // ops
-    val httpOps = new DefaultBinHttpOps
-    val binOps  = new DefaultBinRetrievalOps(httpOps, binSvcUrl)
+    val httpOps           = new DefaultBinHttpOps
+    val binOps            = new DefaultBinRetrievalOps(httpOps, binSvcUrl)
+    implicit val cacheOps = new RedisCacheOpsProvider(redisUrl, redisPort).stringValueCacheOps
 
     // service
     val healthcheckService = new DefaultHealthCheckService

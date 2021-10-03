@@ -58,6 +58,7 @@ lazy val commonlibraryDependencies = {
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
     "com.typesafe.akka" %% "akka-actor" % akkaVersion,
     "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
+    "com.github.etaty" %% "rediscala" % "1.9.0",
     // "io.circe" %% "circe-generic" % http4sVersion,
     // "io.circe" %% "circe-core" % circeVersion,
     // "io.circe" %% "circe-generic" % circeVersion,

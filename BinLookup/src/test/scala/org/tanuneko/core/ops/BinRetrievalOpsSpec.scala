@@ -9,7 +9,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.wordspec.AsyncWordSpecLike
 import org.tanuneko.core.TestData
-import org.tanuneko.ops.{ BinHttpOps, DefaultBinRetrievalOps }
+import org.tanuneko.ops.{ BinHttpOps, DefaultBinRetrievalOps, RedisCacheOpsProvider }
 
 import scala.concurrent.Future
 
@@ -22,6 +22,7 @@ class BinRetrievalOpsSpec
   implicit val ec             = system.dispatcher
   implicit val ac             = system
   implicit val binHttpOpsMock = mock[BinHttpOps]
+  implicit val cacheOps       = new RedisCacheOpsProvider().inmemStringCacheOps
 
   "BinRetrievalOps returns bin data on successful communication with external bin service" in {
 
@@ -34,7 +35,7 @@ class BinRetrievalOpsSpec
     val binOps = new DefaultBinRetrievalOps(binHttpOpsMock, "http://test.com")
 
     binOps
-      .retrieveBIN("123456")
+      .retrieveBIN("123456", cacheOps)
       .map { result =>
         result match {
           case Right(bin) =>
@@ -65,7 +66,7 @@ class BinRetrievalOpsSpec
     val binOps = new DefaultBinRetrievalOps(binHttpOpsMock, "http://test.com")
 
     binOps
-      .retrieveBIN("123456")
+      .retrieveBIN("123456", cacheOps)
       .map { result =>
         result match {
           case Right(_) => fail("should be left")
@@ -94,7 +95,7 @@ class BinRetrievalOpsSpec
     val binOps = new DefaultBinRetrievalOps(binHttpOpsMock, "http://test.com")
 
     binOps
-      .retrieveBIN("123456")
+      .retrieveBIN("123456", cacheOps)
       .map { result =>
         result match {
           case Right(_) => fail("should be left")
