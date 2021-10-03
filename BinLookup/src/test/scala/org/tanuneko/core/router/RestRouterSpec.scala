@@ -9,22 +9,23 @@ import org.scalatest.wordspec.AnyWordSpec
 import org.tanuneko.core.TestData
 import org.tanuneko.core.models.{ BinInfo, ErrorResponse }
 import org.tanuneko.core.services.{ DefaultBinService, DefaultHealthCheckService }
-import org.tanuneko.ops.BinRetrievalOps
+import org.tanuneko.ops.{ BinRetrievalOps, RedisCacheOpsProvider }
 
 import scala.concurrent.Future
 import spray.json._
 
 class RestRouterSpec extends AnyWordSpec with Matchers with MockFactory with ScalatestRouteTest {
 
-  implicit val ec = system.dispatcher
-  implicit val ac = system
+  implicit val ec       = system.dispatcher
+  implicit val ac       = system
+  implicit val cacheOps = new RedisCacheOpsProvider().inmemStringCacheOps
 
   val healthCheckService = new DefaultHealthCheckService
 
   "Shallow Health Check returns Healthy Status" in {
     val binRetrievalOpsMock = stub[BinRetrievalOps]
 
-    (binRetrievalOpsMock.retrieveBIN _).when(*).returns(Future.successful(Right(TestData.testBinDataAsBinInfo)))
+    (binRetrievalOpsMock.retrieveBIN _).when(*, *).returns(Future.successful(Right(TestData.testBinDataAsBinInfo)))
     val binService = new DefaultBinService(binRetrievalOpsMock)
 
     val restRouter = new RestRouter(healthCheckService, binService)
@@ -38,7 +39,7 @@ class RestRouterSpec extends AnyWordSpec with Matchers with MockFactory with Sca
   "Deep Health Check returns either Healthy or Unhealthy Status" in {
     val binRetrievalOpsMock = stub[BinRetrievalOps]
 
-    (binRetrievalOpsMock.retrieveBIN _).when(*).returns(Future.successful(Right(TestData.testBinDataAsBinInfo)))
+    (binRetrievalOpsMock.retrieveBIN _).when(*, *).returns(Future.successful(Right(TestData.testBinDataAsBinInfo)))
     val binService = new DefaultBinService(binRetrievalOpsMock)
 
     val restRouter = new RestRouter(healthCheckService, binService)
@@ -57,7 +58,7 @@ class RestRouterSpec extends AnyWordSpec with Matchers with MockFactory with Sca
     import org.tanuneko.core.models.BinInfoJsonProtocol._
     val binRetrievalOpsMock = stub[BinRetrievalOps]
 
-    (binRetrievalOpsMock.retrieveBIN _).when(*).returns(Future.successful(Right(TestData.testBinDataAsBinInfo)))
+    (binRetrievalOpsMock.retrieveBIN _).when(*, *).returns(Future.successful(Right(TestData.testBinDataAsBinInfo)))
     val binService = new DefaultBinService(binRetrievalOpsMock)
 
     val restRouter = new RestRouter(healthCheckService, binService)
@@ -77,7 +78,7 @@ class RestRouterSpec extends AnyWordSpec with Matchers with MockFactory with Sca
     val binRetrievalOpsMock = stub[BinRetrievalOps]
 
     (binRetrievalOpsMock.retrieveBIN _)
-      .when(*)
+      .when(*, *)
       .returns(Future.successful(Left(ErrorResponse(id = "ERRID", descr = "ERRDESCR"))))
     val binService = new DefaultBinService(binRetrievalOpsMock)
 
@@ -92,7 +93,7 @@ class RestRouterSpec extends AnyWordSpec with Matchers with MockFactory with Sca
   "Bin Service lookup ends up Future Failure" in {
     val binRetrievalOpsMock = stub[BinRetrievalOps]
 
-    (binRetrievalOpsMock.retrieveBIN _).when(*).returns(Future.failed(new Exception("ERR")))
+    (binRetrievalOpsMock.retrieveBIN _).when(*, *).returns(Future.failed(new Exception("ERR")))
     val binService = new DefaultBinService(binRetrievalOpsMock)
 
     val restRouter = new RestRouter(healthCheckService, binService)

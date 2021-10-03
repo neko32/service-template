@@ -7,7 +7,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AsyncWordSpecLike
 import org.tanuneko.core.TestData
 import org.tanuneko.core.models.ErrorResponse
-import org.tanuneko.ops.BinRetrievalOps
+import org.tanuneko.ops.{ BinRetrievalOps, RedisCacheOpsProvider }
 
 import scala.concurrent.Future
 
@@ -17,14 +17,15 @@ class BinServiceSpec
     with MockFactory
     with AsyncWordSpecLike {
 
-  implicit val ec = system.dispatcher
-  implicit val ac = system
+  implicit val ec       = system.dispatcher
+  implicit val ac       = system
+  implicit val cacheOps = new RedisCacheOpsProvider().inmemStringCacheOps
 
   "BiNService executes Bin Retrieval operation and receives Right on successful result" in {
 
     val binRetrievalOpsMock = stub[BinRetrievalOps]
 
-    (binRetrievalOpsMock.retrieveBIN _).when(*).returns(Future.successful(Right(TestData.testBinDataAsBinInfo)))
+    (binRetrievalOpsMock.retrieveBIN _).when(*, *).returns(Future.successful(Right(TestData.testBinDataAsBinInfo)))
     val binService: BinService = new DefaultBinService(binRetrievalOpsMock)
     binService.lookup("111111") map {
       case Left(_) => fail("should be right")
@@ -42,7 +43,7 @@ class BinServiceSpec
     val binRetrievalOpsMock = stub[BinRetrievalOps]
 
     (binRetrievalOpsMock.retrieveBIN _)
-      .when(*)
+      .when(*, *)
       .returns(Future.successful(Left(ErrorResponse(id = "ERRID", descr = "ERRDESCR"))))
     val binService: BinService = new DefaultBinService(binRetrievalOpsMock)
     binService.lookup("111111") map {

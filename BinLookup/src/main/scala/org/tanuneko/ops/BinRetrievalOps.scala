@@ -27,7 +27,7 @@ class DefaultBinHttpOps(implicit ac: ActorSystem, ec: ExecutionContext) extends 
 }
 
 trait BinRetrievalOps {
-  def retrieveBIN(bin: String): Future[Either[ErrorResponse, BinInfo]]
+  def retrieveBIN(bin: String, cacheOps: CacheOps[String]): Future[Either[ErrorResponse, BinInfo]]
 }
 
 class DefaultBinRetrievalOps(BinHttpOps: BinHttpOps, binSvcUrl: String)(implicit
@@ -36,12 +36,41 @@ class DefaultBinRetrievalOps(BinHttpOps: BinHttpOps, binSvcUrl: String)(implicit
 ) extends BinRetrievalOps
     with LazyLogging {
 
-  override def retrieveBIN(bin: String): Future[Either[ErrorResponse, BinInfo]] = {
+  override def retrieveBIN(bin: String, cacheOps: CacheOps[String]): Future[Either[ErrorResponse, BinInfo]] = {
     implicit val jsonStreamingSupport: JsonEntityStreamingSupport =
       EntityStreamingSupport.json()
 
     import BinInfoJsonProtocol._
     logger.info(s"bin - ${bin}")
+
+    cacheOps.get(s"binsvc:bin:${bin}").flatMap { r =>
+      r match {
+        case None => // continue
+          BinHttpOps
+            .sendHttpReq(bin, binSvcUrl)
+            .flatMap { x =>
+              x.status.intValue match {
+                case rez if rez == 200 =>
+                  val retVal = x.entity.dataBytes
+                    .runWith(Sink.fold(ByteString.empty)(_ ++ _))
+                    .map(_.utf8String) map { rez =>
+                    cacheOps.set(s"binsvc:bin:${bin}", rez)
+                    rez.asJson.convertTo[BinInfo]
+                  }
+                  retVal.map(Right(_))
+                case e =>
+                  val errorResp = ErrorResponse(s"BINSVC_ERR_${x.status.intValue}", s"err - ${x.status.intValue}")
+                  Future(Left(errorResp))
+              }
+            }
+        case Some(binDataStr) =>
+          logger.info(s"BIN ${bin} was retrieved from redis cache")
+          Future.successful(Right(binDataStr.asJson.convertTo[BinInfo]))
+        // from string to BinInfo
+      }
+
+    }
+
     BinHttpOps
       .sendHttpReq(bin, binSvcUrl)
       .flatMap { x =>
