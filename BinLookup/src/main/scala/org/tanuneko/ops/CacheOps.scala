@@ -23,8 +23,9 @@ class RedisCacheOpsProvider(redisHost: String = "localhost", redisPort: Int = 63
 
     val redis = RedisClient()
 
-    override def set(key: String, value: String) =
-      redis.set(key, value)
+    override def set(key: String, value: String) = {
+      redis.set(key, value, Some(3600))
+    }
 
     override def get(key: String) =
       redis.get[String](key)
