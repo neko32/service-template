@@ -104,4 +104,18 @@ class RestRouterSpec extends AnyWordSpec with Matchers with MockFactory with Sca
 
   }
 
+  "Bin Service lookup ends up Future Failure when bin format is wrong" in {
+    val binRetrievalOpsMock = stub[BinRetrievalOps]
+
+    (binRetrievalOpsMock.retrieveBIN _).when(*, *).returns(Future.failed(new Exception("ERR")))
+    val binService = new DefaultBinService(binRetrievalOpsMock)
+
+    val restRouter = new RestRouter(healthCheckService, binService)
+    Get("/bin/123D56") ~> restRouter.route ~> check {
+      status.intValue() must equal(400)
+      entityAs[String] must equal("BIN 123D56 format is wrong")
+    }
+
+  }
+
 }

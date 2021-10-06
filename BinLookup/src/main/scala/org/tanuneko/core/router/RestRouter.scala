@@ -43,7 +43,6 @@ class RestRouter(healthcheckService: HealthCheckService, binService: BinService)
     // [TODO] add validation for segment val
     get {
       path("bin" / Segment) { binNum: String =>
-        logger.info(s"received bin/${binNum} request..")
         onComplete(binService.lookup(binNum)) {
           case Success(rez) =>
             rez match {
@@ -54,6 +53,8 @@ class RestRouter(healthcheckService: HealthCheckService, binService: BinService)
               case Left(e) =>
                 complete(HttpResponse(500, entity = HttpEntity(ContentTypes.`application/json`, e.toJson.compactPrint)))
             }
+          case Failure(e:BinFormatException) =>
+            complete(HttpResponse(400, entity = HttpEntity(ContentTypes.`application/json`, e.getMessage)))
           case Failure(e) =>
             e.printStackTrace()
             complete(HttpResponse(500, entity = HttpEntity(ContentTypes.`application/json`, e.getMessage)))

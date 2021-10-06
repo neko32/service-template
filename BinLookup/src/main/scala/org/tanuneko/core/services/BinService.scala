@@ -13,6 +13,7 @@ import scala.concurrent.{ ExecutionContext, Future }
 
 trait BinService {
   def lookup(bin: String): Future[Either[ErrorResponse, BinInfo]]
+  def validateBin(bin: String): Future[Boolean]
 }
 
 class DefaultBinService(binOps: BinRetrievalOps)(implicit
@@ -22,6 +23,16 @@ class DefaultBinService(binOps: BinRetrievalOps)(implicit
 ) extends BinService
     with LazyLogging {
 
-  override def lookup(bin: String): Future[Either[ErrorResponse, BinInfo]] = binOps.retrieveBIN(bin, cacheOps)
+  override def lookup(bin: String): Future[Either[ErrorResponse, BinInfo]] = {
+    for {
+      validationResult <- validateBin(bin)
+      y <- if(validationResult) binOps.retrieveBIN(bin, cacheOps) else Future.failed(new BinFormatException(s"BIN ${bin} format is wrong"))
+    } yield y
+  }
+
+  override def validateBin(bin:String): Future[Boolean] = Future.successful {
+    val allowedSize = Seq(6, 8)
+    if (allowedSize.contains(bin.length) && bin.forall(_.isDigit)) true else false
+  }
 
 }
