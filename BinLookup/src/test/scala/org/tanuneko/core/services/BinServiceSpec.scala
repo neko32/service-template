@@ -55,4 +55,44 @@ class BinServiceSpec
 
   }
 
+  "BinService returns validation result true if BIN length 6 and all digit" in {
+    val binRetrievalOpsMock = stub[BinRetrievalOps]
+
+    (binRetrievalOpsMock.retrieveBIN _)
+      .when(*, *)
+      .returns(Future.successful(Left(ErrorResponse(id = "ERRID", descr = "ERRDESCR"))))
+    val binService: BinService = new DefaultBinService(binRetrievalOpsMock)
+    binService.validateBin("123456") map { _ must equal(true)}
+  }
+
+  "BinService returns validation result true if BIN length 8 and all digit" in {
+    val binRetrievalOpsMock = stub[BinRetrievalOps]
+
+    (binRetrievalOpsMock.retrieveBIN _)
+      .when(*, *)
+      .returns(Future.successful(Left(ErrorResponse(id = "ERRID", descr = "ERRDESCR"))))
+    val binService: BinService = new DefaultBinService(binRetrievalOpsMock)
+    binService.validateBin("12345678") map { _ must equal(true)}
+  }
+
+  "BinService returns validation result false if bin length is neither 6 nor 8" in {
+    val binRetrievalOpsMock = stub[BinRetrievalOps]
+
+    (binRetrievalOpsMock.retrieveBIN _)
+      .when(*, *)
+      .returns(Future.successful(Left(ErrorResponse(id = "ERRID", descr = "ERRDESCR"))))
+    val binService: BinService = new DefaultBinService(binRetrievalOpsMock)
+    binService.validateBin("12345") map { _ must equal(false)}
+  }
+
+  "BinService returns validation result false if bin contains non-digit char" in {
+    val binRetrievalOpsMock = stub[BinRetrievalOps]
+
+    (binRetrievalOpsMock.retrieveBIN _)
+      .when(*, *)
+      .returns(Future.successful(Left(ErrorResponse(id = "ERRID", descr = "ERRDESCR"))))
+    val binService: BinService = new DefaultBinService(binRetrievalOpsMock)
+    binService.validateBin("12D45") map { _ must equal(false)}
+  }
+
 }
